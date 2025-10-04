@@ -140,6 +140,9 @@ class QueryEngine:
         # 4. Extract source information from chunk_spans
         sources = []
         for i, chunk_span in enumerate(chunk_spans, 1):
+            # Extract pure text content without metadata and front matter
+            pure_content = "".join(chunk.body for chunk in chunk_span.chunks)
+
             source = {
                 "index": i,
                 "document_id": chunk_span.document.id,
@@ -147,8 +150,8 @@ class QueryEngine:
                 "title": chunk_span.document.metadata_.get('title', 'N/A'),
                 "category": chunk_span.document.metadata_.get('category', 'general'),
                 "chunk_range": f"{chunk_span.chunks[0].id} → {chunk_span.chunks[-1].id}",
-                "content": chunk_span.content[:200] + "..." if len(chunk_span.content) > 200 else chunk_span.content,
-                "full_content": chunk_span.content
+                "content": pure_content,
+                "full_content": pure_content
             }
             sources.append(source)
 
@@ -187,15 +190,13 @@ class QueryEngine:
         }
         category_jp = category_labels.get(category, category)
 
-        # Format content preview (first 100 characters)
-        content_preview = chunk_span.content[:100].replace('\n', ' ')
-        if len(chunk_span.content) > 100:
-            content_preview += "..."
+        # Extract pure text content without metadata and front matter
+        pure_content = "".join(chunk.body for chunk in chunk_span.chunks)
 
         # Format citation
         citation = f"[{index}] {title} ({category_jp})\n"
         citation += f"    出典: {url}\n"
-        citation += f"    内容: {content_preview}"
+        citation += f"    内容: {pure_content}"
 
         return citation
 
