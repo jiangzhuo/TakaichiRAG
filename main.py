@@ -139,8 +139,11 @@ def main():
   # 既存のJSONファイルからインデックス作成
   python main.py --index data/raw/scraped_data.json
 
-  # 対話モードを開始
+  # 対話モードを開始（CLI）
   python main.py --chat
+
+  # Webチャットインターフェースを起動
+  python main.py --web
 
   # 単一の質問をテスト
   python main.py --query "高市早苗の基本理念は何ですか？"
@@ -173,6 +176,23 @@ def main():
         type=str,
         metavar='QUESTION',
         help='単一の質問をテスト'
+    )
+    parser.add_argument(
+        '--web',
+        action='store_true',
+        help='Webチャットインターフェースを起動'
+    )
+    parser.add_argument(
+        '--host',
+        type=str,
+        default='0.0.0.0',
+        help='Webサーバーのホストアドレス（デフォルト: 0.0.0.0）'
+    )
+    parser.add_argument(
+        '--port',
+        type=int,
+        default=8000,
+        help='Webサーバーのポート番号（デフォルト: 8000）'
     )
 
     args = parser.parse_args()
@@ -208,6 +228,10 @@ def main():
 
             if args.query:
                 test_query(args.query)
+
+            if args.web:
+                from web_api import run_server
+                run_server(host=args.host, port=args.port)
 
     except KeyboardInterrupt:
         print("\n\n処理を中断しました。")
