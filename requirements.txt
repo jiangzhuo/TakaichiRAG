@@ -1,0 +1,23 @@
+# Core RAG components
+raglite>=0.1.0
+python-dotenv>=1.0.0
+
+# Reranker support for RAGLite
+rerankers>=0.5.0
+flashrank>=0.2.0
+
+# Web scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# OpenAI API
+openai>=1.0.0
+
+# Utilities
+tqdm>=4.65.0
+pandas>=2.0.0
+
+# DuckDB with version constraints (avoid 1.4.0 due to type system issues)
+duckdb>=1.1.3,!=1.4.0,<1.5.0
+duckdb-engine>=0.16.0
