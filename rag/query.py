@@ -1,6 +1,6 @@
 """Query engine for RAGLite."""
 
-from typing import List, Dict, Optional, Generator
+from typing import Dict
 from raglite import rag, RAGLiteConfig, retrieve_context, add_context
 
 
@@ -43,70 +43,18 @@ class QueryEngine:
         ]
 
         # Get response from RAG
+        response_stream = rag(messages, config=self.config)
+
         if stream:
-            return self._stream_response(messages)
+            # Return generator for streaming
+            return response_stream
         else:
-            response_stream = rag(messages, config=self.config)
+            # Collect full response
             full_response = ""
             for chunk in response_stream:
                 if chunk:
                     full_response += chunk
             return full_response
-
-    def _stream_response(self, messages: List[Dict]) -> Generator[str, None, None]:
-        """
-        Stream the response from RAG.
-
-        Args:
-            messages: Messages in OpenAI format
-
-        Yields:
-            Response chunks
-        """
-        response_stream = rag(messages, config=self.config)
-        for chunk in response_stream:
-            if chunk:
-                yield chunk
-
-    def query_with_context(self, question: str, max_context: int = 3) -> Dict:
-        """
-        Query with explicit context retrieval.
-
-        Args:
-            question: The question to ask
-            max_context: Maximum number of context documents to retrieve
-
-        Returns:
-            Dictionary with answer and source documents
-        """
-        # This is a simplified version - RAGLite handles context internally
-        # For more control, you might need to use lower-level APIs
-
-        answer = self.query(question, stream=False)
-
-        return {
-            "question": question,
-            "answer": answer,
-            "sources": []  # RAGLite handles sources internally
-        }
-
-    def batch_query(self, questions: List[str]) -> List[Dict]:
-        """
-        Process multiple questions in batch.
-
-        Args:
-            questions: List of questions
-
-        Returns:
-            List of answer dictionaries
-        """
-        results = []
-
-        for question in questions:
-            result = self.query_with_context(question)
-            results.append(result)
-
-        return results
 
     def query_with_sources(self, question: str, num_chunks: int = 5) -> Dict:
         """
