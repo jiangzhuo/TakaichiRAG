@@ -395,7 +395,7 @@
 
                 const content = document.createElement('div');
                 content.className = 'source-content';
-                content.textContent = source.content.substring(0, 200) + (source.content.length > 200 ? '...' : '');
+                content.textContent = source.content || '';
                 sourceItem.appendChild(content);
 
                 sourcesContainer.appendChild(sourceItem);
@@ -448,6 +448,7 @@
                 const decoder = new TextDecoder();
                 let answerBubble = null;
                 let currentAnswer = '';
+                let sources = [];
 
                 while (true) {
                     const { done, value } = await reader.read();
@@ -471,15 +472,20 @@
                                     currentAnswer += data.content;
                                     answerBubble.textContent = currentAnswer;
                                     scrollToBottom();
-                                } else if (data.type === 'sources') {
-                                    // Add sources
-                                    addSources(data.content);
+                                } else if (data.type === 'source') {
+                                    // Collect individual sources
+                                    sources.push(data.content);
+                                } else if (data.type === 'sources_end') {
+                                    // Display all collected sources
+                                    if (sources.length > 0) {
+                                        addSources(sources);
+                                    }
                                 } else if (data.type === 'error') {
                                     removeTypingIndicator();
                                     showError(data.content);
                                 }
                             } catch (e) {
-                                console.error('Error parsing SSE data:', e);
+                                console.error('Error parsing SSE data:', e, 'Line:', line);
                             }
                         }
                     }

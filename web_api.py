@@ -86,21 +86,42 @@ async def chat_stream(request: ChatRequest):
             answer = result["answer"]
             for i in range(0, len(answer), 10):  # Send in chunks of 10 chars
                 chunk = answer[i:i+10]
-                yield f"data: {json.dumps({'type': 'answer', 'content': chunk})}\n\n"
+                # Ensure proper JSON encoding with ensure_ascii=False for Japanese
+                data = json.dumps({'type': 'answer', 'content': chunk}, ensure_ascii=False)
+                yield f"data: {data}\n\n"
 
             # Send end of answer marker
             yield f"data: {json.dumps({'type': 'answer_end'})}\n\n"
 
-            # Send sources
+            # Send sources one by one to avoid huge JSON payloads
             if result["sources"]:
-                yield f"data: {json.dumps({'type': 'sources', 'content': result['sources']})}\n\n"
+                for source in result["sources"]:
+                    # Create a clean copy of source with truncated content for preview
+                    source_preview = {
+                        'index': source['index'],
+                        'title': source['title'],
+                        'category': source['category'],
+                        'url': source['url'],
+                        # Truncate content to avoid huge payloads and keep first 300 chars
+                        'content': source['content'][:300] + ('...' if len(source['content']) > 300 else '')
+                    }
+                    # Ensure proper JSON encoding with separators to avoid extra whitespace
+                    data = json.dumps(
+                        {'type': 'source', 'content': source_preview},
+                        ensure_ascii=False,
+                        separators=(',', ':')
+                    )
+                    yield f"data: {data}\n\n"
+
+                # Send sources end marker
+                yield f"data: {json.dumps({'type': 'sources_end'})}\n\n"
 
             # Send completion marker
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
         except Exception as e:
             error_msg = f"エラーが発生しました: {str(e)}"
-            yield f"data: {json.dumps({'type': 'error', 'content': error_msg})}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'content': error_msg}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(
         generate_response(),
